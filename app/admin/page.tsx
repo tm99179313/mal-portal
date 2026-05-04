@@ -25,7 +25,7 @@ export default function AdminDashboard() {
         router.push('/login');
         return;
       }
-      const { data } = await supabase.from('courses').select('*').order('created_at', { ascending: false });
+      const { data } = await supabase.from('courses').select('*').order('year', { ascending: false });
       setCourses(data || []);
       setIsLoading(false);
     }
