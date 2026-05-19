@@ -132,9 +132,7 @@ export default function NewCoursePage() {
     </p>
   </div>
 </div>
-              placeholder="例: mal2025"
-              className="w-full text-2xl font-bold text-black border-4 border-black p-4 focus:outline-none focus:bg-[#FFFFE0] transition-colors"
-            />
+              
             <p className="mt-2 font-bold text-gray-600">※ 受講生がこのコースを登録する際に入力する合言葉です</p>
           </div>
 
