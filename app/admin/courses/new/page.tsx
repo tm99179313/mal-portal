@@ -101,9 +101,14 @@ export default function NewCoursePage() {
             </label>
             <input
               type="text"
-              value={passcode}
-              onChange={(e) => setPasscode(e.target.value)}
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+  type="text"
+  value={passcode}
+  onChange={(e) => setPasscode(e.target.value)}
+  className="bg-slate-50 border border-blue-300 p-2 rounded text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+/>
+
+<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
   <label className="flex items-center gap-2 text-sm font-bold text-slate-600">
     <input
       type="checkbox"
