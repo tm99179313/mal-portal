@@ -22,7 +22,12 @@ export default function StudentCoursesPage() {
       }
 
       // ログインが確認できたら、コース一覧を取得
-      const { data } = await supabase.from('courses').select('*').order('year', { ascending: false });
+      const { data } = await supabase
+  .from('courses')
+  .select('*')
+  .order('is_pinned', { ascending: false })
+  .order('display_order', { ascending: true })
+  .order('year', { ascending: false });
       setCourses(data || []);
       setIsLoading(false);
     }
