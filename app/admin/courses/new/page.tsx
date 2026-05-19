@@ -12,7 +12,10 @@ export default function NewCoursePage() {
   const [year, setYear] = useState(new Date().getFullYear().toString());
   // ★ パスコード用のステートを追加
   const [passcode, setPasscode] = useState('');
-  
+
+　const [isPinned, setIsPinned] = useState(false);
+　const [displayOrder, setDisplayOrder] = useState(10);
+ 
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
