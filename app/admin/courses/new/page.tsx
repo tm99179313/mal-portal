@@ -99,8 +99,6 @@ export default function NewCoursePage() {
             <label className="block text-3xl font-black text-black mb-4 uppercase">
               パスコード（受講生用）
             </label>
-            <input
-              type="text"
               <input
   type="text"
   value={passcode}
