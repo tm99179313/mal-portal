@@ -17,6 +17,21 @@ export default function AdminDashboard() {
   const [editName, setEditName] = useState('');
   const [editYear, setEditYear] = useState('');
   const [editPasscode, setEditPasscode] = useState('');
+  const [editIsPinned, setEditIsPinned] = useState(false);
+　const [editDisplayOrder, setEditDisplayOrder] = useState(10);
+  const sortCourses = (courseList: any[]) => {
+  return [...courseList].sort((a, b) => {
+    if (a.is_pinned && !b.is_pinned) return -1;
+    if (!a.is_pinned && b.is_pinned) return 1;
+
+    const orderA = Number(a.display_order ?? 10);
+    const orderB = Number(b.display_order ?? 10);
+
+    if (orderA !== orderB) return orderA - orderB;
+
+    return Number(b.year) - Number(a.year);
+  });
+};
 
   useEffect(() => {
     async function load() {
@@ -25,7 +40,12 @@ export default function AdminDashboard() {
         router.push('/login');
         return;
       }
-      const { data } = await supabase.from('courses').select('*').order('year', { ascending: false });
+      const { data } = await supabase
+  .from('courses')
+  .select('*')
+  .order('is_pinned', { ascending: false })
+  .order('display_order', { ascending: true })
+  .order('year', { ascending: false });
       setCourses(data || []);
       setIsLoading(false);
     }
@@ -40,24 +60,40 @@ export default function AdminDashboard() {
   };
 
   const handleEditStart = (course: any) => {
-    setEditingCourseId(course.id);
-    setEditName(course.name);
-    setEditYear(course.year);
-    setEditPasscode(course.passcode);
-  };
+  setEditingCourseId(course.id);
+  setEditName(course.name);
+  setEditYear(String(course.year));
+  setEditPasscode(course.passcode);
+  setEditIsPinned(course.is_pinned ?? false);
+  setEditDisplayOrder(course.display_order ?? 10);
+};
 
-  const handleEditSave = async (id: string) => {
-    await supabase.from('courses').update({ 
-      name: editName, 
-      year: editYear, 
-      passcode: editPasscode 
-    }).eq('id', id);
-    
-    setCourses(courses.map(c => 
-      c.id === id ? { ...c, name: editName, year: editYear, passcode: editPasscode } : c
-    ));
-    setEditingCourseId(null);
-  };
+const handleEditSave = async (id: string) => {
+  await supabase.from('courses').update({ 
+    name: editName, 
+    year: Number(editYear), 
+    passcode: editPasscode,
+    is_pinned: editIsPinned,
+    display_order: Number(editDisplayOrder)
+  }).eq('id', id);
+  
+  const updatedCourses = courses.map(c => 
+  c.id === id 
+    ? { 
+        ...c, 
+        name: editName, 
+        year: Number(editYear), 
+        passcode: editPasscode,
+        is_pinned: editIsPinned,
+        display_order: Number(editDisplayOrder)
+      } 
+    : c
+);
+
+setCourses(sortCourses(updatedCourses));
+
+  setEditingCourseId(null);
+};
 
   if (isLoading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold text-slate-500">読み込み中...</div>;
 
@@ -117,13 +153,51 @@ export default function AdminDashboard() {
                     <label className="text-xs text-slate-500 font-bold mb-1 block">コース名</label>
                     <input type="text" value={editName} onChange={e=>setEditName(e.target.value)} className="bg-slate-50 border border-blue-300 p-2 rounded w-full font-bold focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   </div>
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+  <label className="flex items-center gap-2 text-sm font-bold text-slate-600">
+    <input
+      type="checkbox"
+      checked={editIsPinned}
+      onChange={(e) => setEditIsPinned(e.target.checked)}
+      className="w-4 h-4"
+    />
+    上部にピン留め
+  </label>
+
+  <div>
+    <label className="text-xs text-slate-500 font-bold mb-1 block">
+      表示順
+    </label>
+    <input
+      type="number"
+      value={editDisplayOrder}
+      onChange={(e) => setEditDisplayOrder(Number(e.target.value))}
+      className="bg-slate-50 border border-blue-300 p-2 rounded text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+    />
+    <p className="text-xs text-slate-400 mt-1">
+      数字が小さいほど上に表示されます
+    </p>
+  </div>
+</div>
                 </div>
               ) : (
                 <div className="mb-4 md:mb-0 pl-2 flex-grow">
-                  <span className="font-mono bg-slate-50 border border-slate-200 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-sm mb-3 inline-flex items-center tracking-widest">
-                    <span className="text-blue-400 mr-1.5 opacity-60">{'/>'}</span>
-                    {course.year}_EDITION
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+  <span className="font-mono bg-slate-50 border border-slate-200 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-sm inline-flex items-center tracking-widest">
+    <span className="text-blue-400 mr-1.5 opacity-60">{'/>'}</span>
+    {course.year}_EDITION
+  </span>
+
+  {course.is_pinned && (
+    <span className="bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-sm">
+      📌 ピン留め中
+    </span>
+  )}
+
+  <span className="bg-slate-50 border border-slate-200 text-slate-500 text-xs font-bold px-2.5 py-1 rounded-sm">
+    表示順：{course.display_order ?? 10}
+  </span>
+</div>
                   
                   <Link href={`/admin/courses/${course.id}/sessions`} className="block group/link w-fit">
                     <h2 className="text-2xl font-bold text-slate-800 mb-2 group-hover/link:text-blue-600 transition-colors flex items-center gap-2">
