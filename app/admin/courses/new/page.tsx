@@ -103,6 +103,32 @@ export default function NewCoursePage() {
               type="text"
               value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+  <label className="flex items-center gap-2 text-sm font-bold text-slate-600">
+    <input
+      type="checkbox"
+      checked={isPinned}
+      onChange={(e) => setIsPinned(e.target.checked)}
+      className="w-4 h-4"
+    />
+    上部にピン留め
+  </label>
+
+  <div>
+    <label className="text-xs text-slate-500 font-bold mb-1 block">
+      表示順
+    </label>
+    <input
+      type="number"
+      value={displayOrder}
+      onChange={(e) => setDisplayOrder(Number(e.target.value))}
+      className="bg-slate-50 border border-blue-300 p-2 rounded text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+    />
+    <p className="text-xs text-slate-400 mt-1">
+      数字が小さいほど上に表示されます
+    </p>
+  </div>
+</div>
               placeholder="例: mal2025"
               className="w-full text-2xl font-bold text-black border-4 border-black p-4 focus:outline-none focus:bg-[#FFFFE0] transition-colors"
             />
