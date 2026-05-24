@@ -7,6 +7,13 @@ type CourseAiBoxProps = {
   courseId: string;
 };
 
+const SUGGESTED_QUESTIONS = [
+  'この回の重要ポイントを3つに整理して',
+  '臨床で注意すべき点をまとめて',
+  '患者さんに説明する言い方でまとめて',
+  '初心者がつまずきやすいポイントを教えて',
+];
+
 export default function CourseAiBox({ courseId }: CourseAiBoxProps) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
@@ -72,6 +79,13 @@ export default function CourseAiBox({ courseId }: CourseAiBoxProps) {
     }
   }
 
+  function useSuggestedQuestion(text: string) {
+    setQuestion(text);
+    setMessage('');
+    setAnswer('');
+    setReferences([]);
+  }
+
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8">
       <div className="mb-5">
@@ -89,8 +103,26 @@ export default function CourseAiBox({ courseId }: CourseAiBoxProps) {
           本AIはセミナー資料をもとに回答します。資料に含まれない内容は正確に回答できない場合があります。
         </p>
         <p className="mt-1">
-          詳しく聞きたい方は、メールにて直接ご相談ください。
+          診断・治療方針の最終判断は、担当歯科医師の責任で行ってください。
         </p>
+      </div>
+
+      <div className="mb-5">
+        <p className="text-xs font-bold text-slate-500 mb-2">
+          おすすめ質問例
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {SUGGESTED_QUESTIONS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => useSuggestedQuestion(item)}
+              className="text-xs md:text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-3 py-2 hover:bg-blue-100 hover:border-blue-300 active:scale-95 transition-all"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
       </div>
 
       <form onSubmit={handleAsk} className="space-y-4">
