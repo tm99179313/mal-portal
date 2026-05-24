@@ -45,7 +45,38 @@ async function createEmbedding(text: string) {
 
   return data.data[0].embedding;
 }
+async function checkDailyQuestionLimit(email: string) {
+  if (email === ADMIN_EMAIL) {
+    return {
+      allowed: true,
+      countToday: 0,
+      limit: null,
+    };
+  }
 
+  const now = new Date();
+  const startOfToday = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+
+  const { count, error } = await supabaseAdmin
+    .from('ai_question_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('email', email)
+    .gte('created_at', startOfToday.toISOString());
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const countToday = count || 0;
+
+  return {
+    allowed: countToday < MAX_DAILY_AI_QUESTIONS,
+    countToday,
+    limit: MAX_DAILY_AI_QUESTIONS,
+  };
+}
 async function createAnswer(question: string, chunks: MatchedChunk[]) {
   async function checkDailyQuestionLimit(email: string) {
   if (email === ADMIN_EMAIL) {
