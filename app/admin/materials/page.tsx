@@ -69,6 +69,7 @@ export default function AdminMaterialsPage() {
 
     try {
       const safeFileName = file.name.replace(/[^\w.\-ぁ-んァ-ン一-龥]/g, '_');
+
       const filePath = `${courseId}/session-${String(sessionNo).padStart(
         2,
         '0'
@@ -86,7 +87,7 @@ export default function AdminMaterialsPage() {
         throw new Error('Storageアップロード失敗: ' + uploadError.message);
       }
 
-      // 2. APIにはファイル情報だけ送る
+      // 2. Vercel APIにはPDF本体を送らず、ファイル情報だけ送る
       const res = await fetch('/api/admin/materials/upload', {
         method: 'POST',
         headers: {
@@ -131,6 +132,7 @@ export default function AdminMaterialsPage() {
     <div className="min-h-screen bg-slate-50 text-slate-800 p-8">
       <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
         <h1 className="text-2xl font-bold mb-2">資料管理</h1>
+
         <p className="text-sm text-slate-500 mb-8">
           セミナー資料PDFをアップロードし、AI質問箱用のデータを作成します。
         </p>
@@ -183,6 +185,7 @@ export default function AdminMaterialsPage() {
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="w-full border border-slate-300 rounded-lg p-3"
             />
+
             <p className="text-xs text-slate-400 mt-2">
               PDFはVercel APIを通さず、Supabase Storageへ直接アップロードします。
             </p>
