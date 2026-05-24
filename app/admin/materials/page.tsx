@@ -33,6 +33,11 @@ export default function AdminMaterialsPage() {
   const [message, setMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editSessionNo, setEditSessionNo] = useState('');
 
   useEffect(() => {
     loadCourses();
@@ -74,6 +79,90 @@ export default function AdminMaterialsPage() {
     return `${course.year ? `${course.year} ` : ''}${course.name}`;
   }
 
+  function startEdit(material: Material) {
+    setEditingId(material.id);
+    setEditTitle(material.title);
+    setEditSessionNo(String(material.session_no || ''));
+    setMessage('');
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditTitle('');
+    setEditSessionNo('');
+  }
+
+  async function handleUpdate(materialId: string) {
+    setMessage('');
+
+    if (!editTitle) {
+      setMessage('資料タイトルを入力してください。');
+      return;
+    }
+
+    if (!editSessionNo) {
+      setMessage('回数を入力してください。');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/materials/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          materialId,
+          title: editTitle,
+          sessionNo: editSessionNo,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || '資料の更新に失敗しました。');
+      }
+
+      setMessage('資料情報を更新しました。');
+      cancelEdit();
+      await loadMaterials();
+    } catch (err: any) {
+      setMessage(err.message || 'エラーが発生しました。');
+    }
+  }
+
+  async function handleDelete(materialId: string) {
+    setMessage('');
+
+    const ok = confirm(
+      'この資料を削除しますか？\nPDF本体とAI用データも削除されます。'
+    );
+
+    if (!ok) return;
+
+    setDeletingId(materialId);
+
+    try {
+      const res = await fetch('/api/admin/materials/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ materialId }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || '資料の削除に失敗しました。');
+      }
+
+      setMessage('資料を削除しました。');
+      await loadMaterials();
+    } catch (err: any) {
+      setMessage(err.message || 'エラーが発生しました。');
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage('');
@@ -109,7 +198,6 @@ export default function AdminMaterialsPage() {
       const safeSessionNo = String(sessionNo).padStart(2, '0');
       const filePath = `${courseId}/session-${safeSessionNo}-${Date.now()}.pdf`;
 
-      // PDF本体はSupabase Storageへ直接アップロード
       const { error: uploadError } = await supabase.storage
         .from('course-materials')
         .upload(filePath, file, {
@@ -121,12 +209,9 @@ export default function AdminMaterialsPage() {
         throw new Error('Storageアップロード失敗: ' + uploadError.message);
       }
 
-      // Vercel APIにはPDF本体を送らず、ファイル情報だけ送る
       const res = await fetch('/api/admin/materials/upload', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           courseId,
           sessionNo,
@@ -171,12 +256,8 @@ export default function AdminMaterialsPage() {
     try {
       const res = await fetch('/api/admin/materials/process', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          materialId,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ materialId }),
       });
 
       const text = await res.text();
@@ -321,45 +402,111 @@ export default function AdminMaterialsPage() {
                   key={material.id}
                   className="border border-slate-200 rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4"
                 >
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className="text-xs font-bold bg-slate-100 border border-slate-200 rounded px-2 py-1">
-                        第{material.session_no ?? '-'}回
-                      </span>
+                  <div className="flex-1">
+                    {editingId === material.id ? (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-500 mb-1">
+                            回数
+                          </label>
+                          <input
+                            type="number"
+                            value={editSessionNo}
+                            onChange={(e) => setEditSessionNo(e.target.value)}
+                            className="w-full border border-slate-300 rounded-lg p-2"
+                          />
+                        </div>
 
-                      <span
-                        className={
-                          material.status === 'processed'
-                            ? 'text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-2 py-1'
-                            : 'text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded px-2 py-1'
-                        }
-                      >
-                        {material.status === 'processed' ? 'AIデータ作成済み' : '未処理'}
-                      </span>
-                    </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-500 mb-1">
+                            資料タイトル
+                          </label>
+                          <input
+                            type="text"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            className="w-full border border-slate-300 rounded-lg p-2"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className="text-xs font-bold bg-slate-100 border border-slate-200 rounded px-2 py-1">
+                            第{material.session_no ?? '-'}回
+                          </span>
 
-                    <h3 className="text-lg font-bold">{material.title}</h3>
+                          <span
+                            className={
+                              material.status === 'processed'
+                                ? 'text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-2 py-1'
+                                : 'text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded px-2 py-1'
+                            }
+                          >
+                            {material.status === 'processed' ? 'AIデータ作成済み' : '未処理'}
+                          </span>
+                        </div>
 
-                    <p className="text-sm text-slate-500 mt-1">
-                      {getCourseLabel(material.course_id)}
-                    </p>
+                        <h3 className="text-lg font-bold">{material.title}</h3>
 
-                    <p className="text-xs text-slate-400 mt-1">
-                      元ファイル名：{material.file_name || '-'}
-                    </p>
+                        <p className="text-sm text-slate-500 mt-1">
+                          {getCourseLabel(material.course_id)}
+                        </p>
+
+                        <p className="text-xs text-slate-400 mt-1">
+                          元ファイル名：{material.file_name || '-'}
+                        </p>
+                      </>
+                    )}
                   </div>
 
-                  <button
-                    onClick={() => handleProcess(material.id)}
-                    disabled={processingId === material.id}
-                    className="bg-indigo-600 text-white font-bold rounded-lg px-5 py-3 hover:bg-indigo-700 disabled:bg-slate-300"
-                  >
-                    {processingId === material.id
-                      ? 'AI用データ作成中...'
-                      : material.status === 'processed'
-                      ? 'AI用データを再作成'
-                      : 'AI用データ作成'}
-                  </button>
+                  <div className="flex flex-wrap gap-2 md:justify-end">
+                    {editingId === material.id ? (
+                      <>
+                        <button
+                          onClick={() => handleUpdate(material.id)}
+                          className="bg-emerald-600 text-white font-bold rounded-lg px-4 py-2 hover:bg-emerald-700"
+                        >
+                          保存
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="border border-slate-300 text-slate-700 font-bold rounded-lg px-4 py-2 hover:bg-slate-50"
+                        >
+                          取消
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleProcess(material.id)}
+                          disabled={processingId === material.id}
+                          className="bg-indigo-600 text-white font-bold rounded-lg px-4 py-2 hover:bg-indigo-700 disabled:bg-slate-300"
+                        >
+                          {processingId === material.id
+                            ? '作成中...'
+                            : material.status === 'processed'
+                            ? 'AI再作成'
+                            : 'AI用データ作成'}
+                        </button>
+
+                        <button
+                          onClick={() => startEdit(material)}
+                          className="border border-slate-300 text-slate-700 font-bold rounded-lg px-4 py-2 hover:bg-slate-50"
+                        >
+                          編集
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(material.id)}
+                          disabled={deletingId === material.id}
+                          className="border border-red-200 text-red-600 font-bold rounded-lg px-4 py-2 hover:bg-red-50 disabled:bg-slate-100"
+                        >
+                          {deletingId === material.id ? '削除中...' : '削除'}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
