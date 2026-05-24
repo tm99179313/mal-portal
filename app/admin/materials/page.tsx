@@ -59,18 +59,20 @@ export default function AdminMaterialsPage() {
   }
 
   async function loadMaterials() {
-    const { data, error } = await supabase
-      .from('course_materials')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('course_materials')
+    .select('*')
+    .order('course_id', { ascending: true })
+    .order('session_no', { ascending: true })
+    .order('created_at', { ascending: true });
 
-    if (error) {
-      setMessage('資料一覧の取得に失敗しました: ' + error.message);
-      return;
-    }
-
-    setMaterials(data || []);
+  if (error) {
+    setMessage('資料一覧の取得に失敗しました: ' + error.message);
+    return;
   }
+
+  setMaterials(data || []);
+}
 
   function getCourseLabel(targetCourseId: string) {
     const course = courses.find((c) => c.id === targetCourseId);
