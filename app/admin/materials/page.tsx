@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 type Course = {
@@ -66,9 +67,9 @@ export default function AdminMaterialsPage() {
     setMaterials(data || []);
   }
 
-  function getCourseLabel(courseId: string) {
-    const course = courses.find((c) => c.id === courseId);
-    if (!course) return courseId;
+  function getCourseLabel(targetCourseId: string) {
+    const course = courses.find((c) => c.id === targetCourseId);
+    if (!course) return targetCourseId;
 
     return `${course.year ? `${course.year} ` : ''}${course.name}`;
   }
@@ -108,6 +109,7 @@ export default function AdminMaterialsPage() {
       const safeSessionNo = String(sessionNo).padStart(2, '0');
       const filePath = `${courseId}/session-${safeSessionNo}-${Date.now()}.pdf`;
 
+      // PDF本体はSupabase Storageへ直接アップロード
       const { error: uploadError } = await supabase.storage
         .from('course-materials')
         .upload(filePath, file, {
@@ -119,6 +121,7 @@ export default function AdminMaterialsPage() {
         throw new Error('Storageアップロード失敗: ' + uploadError.message);
       }
 
+      // Vercel APIにはPDF本体を送らず、ファイル情報だけ送る
       const res = await fetch('/api/admin/materials/upload', {
         method: 'POST',
         headers: {
@@ -203,6 +206,15 @@ export default function AdminMaterialsPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 p-8">
       <div className="max-w-5xl mx-auto space-y-8">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 bg-white border border-slate-300 px-4 py-2.5 rounded-lg shadow-sm hover:bg-slate-50 hover:text-blue-600 hover:border-blue-300 active:scale-95 transition-all"
+          >
+            ← 管理画面に戻る
+          </Link>
+        </div>
+
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
           <h1 className="text-2xl font-bold mb-2">資料管理</h1>
 
