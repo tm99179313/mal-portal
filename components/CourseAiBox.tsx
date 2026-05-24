@@ -83,6 +83,16 @@ export default function CourseAiBox({ courseId }: CourseAiBoxProps) {
         </p>
       </div>
 
+      <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 leading-6">
+        <p className="font-bold mb-1">ご利用前の注意</p>
+        <p>
+          本AIはセミナー資料をもとに回答します。資料に含まれない内容は正確に回答できない場合があります。
+        </p>
+        <p className="mt-1">
+          詳しく聞きたい方は、メールにて直接ご相談ください。
+        </p>
+      </div>
+
       <form onSubmit={handleAsk} className="space-y-4">
         <textarea
           value={question}
