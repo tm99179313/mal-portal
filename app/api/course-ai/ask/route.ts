@@ -47,6 +47,38 @@ async function createEmbedding(text: string) {
 }
 
 async function createAnswer(question: string, chunks: MatchedChunk[]) {
+  async function checkDailyQuestionLimit(email: string) {
+  if (email === ADMIN_EMAIL) {
+    return {
+      allowed: true,
+      countToday: 0,
+      limit: null,
+    };
+  }
+
+  const now = new Date();
+  const startOfToday = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+
+  const { count, error } = await supabaseAdmin
+    .from('ai_question_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('email', email)
+    .gte('created_at', startOfToday.toISOString());
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const countToday = count || 0;
+
+  return {
+    allowed: countToday < MAX_DAILY_AI_QUESTIONS,
+    countToday,
+    limit: MAX_DAILY_AI_QUESTIONS,
+  };
+}
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
@@ -233,6 +265,18 @@ export async function POST(req: Request) {
         { status: 403 }
       );
     }
+    const limitCheck = await checkDailyQuestionLimit(user.email);
+
+if (!limitCheck.allowed) {
+  return NextResponse.json(
+    {
+      error: `本日のAI質問回数が上限に達しました。通常ユーザーは1日${limitCheck.limit}回まで利用できます。また明日ご利用ください。`,
+      countToday: limitCheck.countToday,
+      limit: limitCheck.limit,
+    },
+    { status: 429 }
+  );
+}
 
     const questionEmbedding = await createEmbedding(question);
 
