@@ -24,6 +24,8 @@ export default function AdminAiLogsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [openLogId, setOpenLogId] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState('');
+　const [filterCourse, setFilterCourse] = useState('');
 
   useEffect(() => {
     loadLogs();
@@ -72,6 +74,34 @@ export default function AdminAiLogsPage() {
     }
   }
 
+  const courseOptions = Array.from(
+  new Map(
+    logs
+      .filter((log) => log.course_label)
+      .map((log) => [log.course_label, log.course_label])
+  ).values()
+);
+
+const displayedLogs = logs.filter((log) => {
+  const keyword = searchText.trim().toLowerCase();
+
+  const matchesKeyword = keyword
+    ? [
+        log.email,
+        log.question,
+        log.answer,
+        log.course_label,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(keyword))
+    : true;
+
+  const matchesCourse = filterCourse
+    ? log.course_label === filterCourse
+    : true;
+
+  return matchesKeyword && matchesCourse;
+});
   function formatDate(value: string) {
     if (!value) return '-';
 
@@ -110,6 +140,47 @@ export default function AdminAiLogsPage() {
           <p className="text-sm text-slate-500">
             受講者がAI質問箱で入力した質問と回答を確認できます。
           </p>
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+  <input
+    type="text"
+    value={searchText}
+    onChange={(e) => setSearchText(e.target.value)}
+    placeholder="メール・質問・回答を検索"
+    className="md:col-span-2 border border-slate-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+
+  <select
+    value={filterCourse}
+    onChange={(e) => setFilterCourse(e.target.value)}
+    className="border border-slate-300 rounded-lg px-4 py-3 text-sm font-bold bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    <option value="">すべてのコース</option>
+    {courseOptions.map((courseLabel) => (
+      <option key={courseLabel} value={courseLabel}>
+        {courseLabel}
+      </option>
+    ))}
+  </select>
+</div>
+
+<div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+  <span>
+    表示：{displayedLogs.length}件 / 全{logs.length}件
+  </span>
+
+  {(searchText || filterCourse) && (
+    <button
+      type="button"
+      onClick={() => {
+        setSearchText('');
+        setFilterCourse('');
+      }}
+      className="font-bold text-blue-600 hover:text-blue-700"
+    >
+      絞り込みをリセット
+    </button>
+  )}
+</div>
 
           {message && (
             <div className="mt-6 rounded-lg bg-red-50 border border-red-200 text-red-700 p-4 text-sm font-bold">
@@ -121,13 +192,15 @@ export default function AdminAiLogsPage() {
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
           {isLoading ? (
             <div className="text-sm text-slate-500 font-bold">読み込み中...</div>
-          ) : logs.length === 0 ? (
+          ) : displayedLogs.length === 0 ? (
             <div className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-4">
-              まだAI質問ログはありません。
+             {searchText || filterCourse
+    ? '条件に一致するAI質問ログがありません。'
+    : 'まだAI質問ログはありません。'}
             </div>
           ) : (
             <div className="space-y-4">
-              {logs.map((log) => {
+              {displayedLogs.map((log) => {
                 const isOpen = openLogId === log.id;
 
                 return (
