@@ -68,21 +68,52 @@ export default function AdminMaterialsPage() {
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('courseId', courseId);
-      formData.append('sessionNo', sessionNo);
-      formData.append('title', title);
-      formData.append('file', file);
+      const safeFileName = file.name.replace(/[^\w.\-ぁ-んァ-ン一-龥]/g, '_');
+      const filePath = `${courseId}/session-${String(sessionNo).padStart(
+        2,
+        '0'
+      )}-${Date.now()}-${safeFileName}`;
 
+      // 1. PDF本体はSupabase Storageへ直接アップロード
+      const { error: uploadError } = await supabase.storage
+        .from('course-materials')
+        .upload(filePath, file, {
+          contentType: 'application/pdf',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new Error('Storageアップロード失敗: ' + uploadError.message);
+      }
+
+      // 2. APIにはファイル情報だけ送る
       const res = await fetch('/api/admin/materials/upload', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseId,
+          sessionNo,
+          title,
+          fileName: file.name,
+          filePath,
+        }),
       });
 
-      const result = await res.json();
+      const text = await res.text();
+
+      let result: any = {};
+      try {
+        result = JSON.parse(text);
+      } catch {
+        throw new Error(
+          'APIがJSONではない応答を返しました。APIルートまたはデプロイ状態を確認してください。'
+        );
+      }
 
       if (!res.ok) {
-        throw new Error(result.error || 'アップロードに失敗しました。');
+        throw new Error(result.error || 'DB登録に失敗しました。');
       }
 
       setMessage('資料をアップロードしました。次にAI用データ作成へ進めます。');
@@ -152,6 +183,9 @@ export default function AdminMaterialsPage() {
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="w-full border border-slate-300 rounded-lg p-3"
             />
+            <p className="text-xs text-slate-400 mt-2">
+              PDFはVercel APIを通さず、Supabase Storageへ直接アップロードします。
+            </p>
           </div>
 
           <button
