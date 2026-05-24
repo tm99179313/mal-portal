@@ -345,12 +345,23 @@ export default function AdminMaterialsPage() {
 
             <div>
               <label className="block text-sm font-bold mb-2">PDFファイル</label>
-              <input
-                type="file"
-                accept="application/pdf"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="w-full border border-slate-300 rounded-lg p-3"
-              />
+              <div className="border border-slate-300 rounded-lg p-3 bg-white">
+  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+    <label className="inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-slate-100 border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200 active:scale-95 transition-all">
+      ファイルを選択
+      <input
+        type="file"
+        accept="application/pdf"
+        onChange={(e) => setFile(e.target.files?.[0] || null)}
+        className="hidden"
+      />
+    </label>
+
+    <span className="text-sm text-slate-500">
+      {file ? file.name : '選択されていません'}
+    </span>
+  </div>
+</div>
 
               <p className="text-xs text-slate-400 mt-2">
                 PDFはVercel APIを通さず、Supabase Storageへ直接アップロードします。
