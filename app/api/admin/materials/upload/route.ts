@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    message: 'materials upload API is working',
+  });
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
