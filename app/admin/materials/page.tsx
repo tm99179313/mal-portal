@@ -24,6 +24,7 @@ type Material = {
 export default function AdminMaterialsPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [filterCourseId, setFilterCourseId] = useState('');
 
   const [courseId, setCourseId] = useState('');
   const [sessionNo, setSessionNo] = useState('');
@@ -38,6 +39,10 @@ export default function AdminMaterialsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editSessionNo, setEditSessionNo] = useState('');
+
+  const displayedMaterials = filterCourseId
+  ? materials.filter((material) => material.course_id === filterCourseId)
+  : materials;
 
   useEffect(() => {
     loadCourses();
@@ -388,29 +393,46 @@ export default function AdminMaterialsPage() {
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
-          <div className="flex items-center justify-between gap-4 mb-6">
-            <div>
-              <h2 className="text-xl font-bold">アップロード済み資料</h2>
-              <p className="text-sm text-slate-500 mt-1">
-                PDFをアップロード後、AI用データ作成を実行してください。
-              </p>
-            </div>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+  <div>
+    <h2 className="text-xl font-bold">アップロード済み資料</h2>
+    <p className="text-sm text-slate-500 mt-1">
+      PDFをアップロード後、AI用データ作成を実行してください。
+    </p>
+  </div>
 
-            <button
-              onClick={loadMaterials}
-              className="text-sm font-bold border border-slate-300 rounded-lg px-4 py-2 bg-white hover:bg-slate-50"
-            >
-              更新
-            </button>
-          </div>
+  <div className="flex flex-col sm:flex-row gap-3">
+    <select
+      value={filterCourseId}
+      onChange={(e) => setFilterCourseId(e.target.value)}
+      className="text-sm font-bold border border-slate-300 rounded-lg px-4 py-2 bg-white hover:bg-slate-50"
+    >
+      <option value="">すべてのコース</option>
+      {courses.map((course) => (
+        <option key={course.id} value={course.id}>
+          {course.year ? `${course.year} ` : ''}
+          {course.name}
+        </option>
+      ))}
+    </select>
 
-          {materials.length === 0 ? (
+    <button
+      onClick={loadMaterials}
+      className="text-sm font-bold border border-slate-300 rounded-lg px-4 py-2 bg-white hover:bg-slate-50"
+    >
+      更新
+    </button>
+  </div>
+</div>
+          {displayedMaterials.length === 0 ? (
             <div className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-4">
-              まだ資料がありません。
-            </div>
+  {filterCourseId
+    ? 'このコースにはまだ資料がありません。'
+    : 'まだ資料がありません。'}
+</div>
           ) : (
             <div className="space-y-4">
-              {materials.map((material) => (
+              {displayedMaterials.map((material) => (
                 <div
                   key={material.id}
                   className="border border-slate-200 rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4"
