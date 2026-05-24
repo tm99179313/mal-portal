@@ -176,6 +176,26 @@ export default function AdminDashboard() {
             </Link>
 
             <Link
+  href="/admin/ai-logs"
+  className="flex-1 md:flex-none text-sm font-bold text-purple-700 bg-purple-50 border border-purple-200 px-4 py-2.5 rounded-md shadow-sm hover:bg-purple-100 hover:text-purple-800 hover:border-purple-300 active:scale-95 transition-all flex items-center justify-center gap-2 group"
+>
+  <svg
+    className="w-4 h-4 text-purple-400 group-hover:text-purple-600 transition-colors"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 4v-4z"
+    ></path>
+  </svg>
+  AI質問ログ
+</Link>
+
+            <Link
               href="/admin/courses/new"
               className="flex-1 md:flex-none relative overflow-hidden bg-blue-600 text-white px-6 py-2.5 rounded-md font-semibold shadow-sm hover:bg-blue-500 hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] active:scale-95 transition-all duration-300 group border border-blue-500 inline-block text-center"
             >
