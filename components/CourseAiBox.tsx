@@ -20,6 +20,7 @@ export default function CourseAiBox({ courseId }: CourseAiBoxProps) {
   const [references, setReferences] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
 
   async function handleAsk(e: React.FormEvent) {
     e.preventDefault();
@@ -84,93 +85,108 @@ export default function CourseAiBox({ courseId }: CourseAiBoxProps) {
     setMessage('');
     setAnswer('');
     setReferences([]);
+    setIsOpen(true);
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8">
-      <div className="mb-5">
-        <h2 className="text-xl font-bold text-slate-800">
-          このコース全体にAIで質問する
-        </h2>
-        <p className="text-sm text-slate-500 mt-2">
-          アップロード済み資料をもとに、コース全体から関連箇所を探して回答します。
-        </p>
-      </div>
+    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-6 md:p-8 text-left flex items-center justify-between gap-4 hover:bg-slate-50 transition-all"
+      >
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">
+            このコース全体にAIで質問する
+          </h2>
+          <p className="text-sm text-slate-500 mt-2">
+            アップロード済み資料をもとに、コース全体から関連箇所を探して回答します。
+          </p>
+        </div>
 
-      <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 leading-6">
-        <p className="font-bold mb-1">ご利用前の注意</p>
-        <p>
-          本AIはセミナー資料をもとに回答します。資料に含まれない内容は正確に回答できない場合があります。
-        </p>
-        <p className="mt-1">
-          診断・治療方針の最終判断は、担当歯科医師の責任で行ってください。
-        </p>
-      </div>
+        <span className="text-sm font-bold text-blue-600 whitespace-nowrap">
+          {isOpen ? '閉じる ▲' : '開く ▼'}
+        </span>
+      </button>
 
-      <div className="mb-5">
-        <p className="text-xs font-bold text-slate-500 mb-2">
-          おすすめ質問例
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {SUGGESTED_QUESTIONS.map((item) => (
+      {isOpen && (
+        <div className="px-6 md:px-8 pb-6 md:pb-8">
+          <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 leading-6">
+            <p className="font-bold mb-1">ご利用前の注意</p>
+            <p>
+              本AIはセミナー資料をもとに回答します。資料に含まれない内容は正確に回答できない場合があります。
+            </p>
+            <p className="mt-1">
+              診断・治療方針の最終判断は、担当歯科医師の責任で行ってください。
+            </p>
+          </div>
+
+          <div className="mb-5">
+            <p className="text-xs font-bold text-slate-500 mb-2">
+              おすすめ質問例
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTED_QUESTIONS.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => useSuggestedQuestion(item)}
+                  className="text-xs md:text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-3 py-2 hover:bg-blue-100 hover:border-blue-300 active:scale-95 transition-all"
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <form onSubmit={handleAsk} className="space-y-4">
+            <textarea
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="例：アライナーのアンフィットが起きる原因を整理して"
+              className="w-full min-h-[120px] border border-slate-300 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
             <button
-              key={item}
-              type="button"
-              onClick={() => useSuggestedQuestion(item)}
-              className="text-xs md:text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-3 py-2 hover:bg-blue-100 hover:border-blue-300 active:scale-95 transition-all"
+              type="submit"
+              disabled={isLoading}
+              className="w-full md:w-auto bg-blue-600 text-white font-bold rounded-lg px-6 py-3 hover:bg-blue-700 disabled:bg-slate-300"
             >
-              {item}
+              {isLoading ? '回答作成中...' : 'AIに質問する'}
             </button>
-          ))}
-        </div>
-      </div>
+          </form>
 
-      <form onSubmit={handleAsk} className="space-y-4">
-        <textarea
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          placeholder="例：アライナーのアンフィットが起きる原因を整理して"
-          className="w-full min-h-[120px] border border-slate-300 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+          {message && (
+            <div className="mt-5 rounded-lg bg-red-50 border border-red-200 text-red-700 p-4 text-sm font-bold">
+              {message}
+            </div>
+          )}
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full md:w-auto bg-blue-600 text-white font-bold rounded-lg px-6 py-3 hover:bg-blue-700 disabled:bg-slate-300"
-        >
-          {isLoading ? '回答作成中...' : 'AIに質問する'}
-        </button>
-      </form>
-
-      {message && (
-        <div className="mt-5 rounded-lg bg-red-50 border border-red-200 text-red-700 p-4 text-sm font-bold">
-          {message}
-        </div>
-      )}
-
-      {answer && (
-        <div className="mt-6 rounded-xl bg-slate-50 border border-slate-200 p-5">
-          <h3 className="font-bold text-slate-800 mb-3">回答</h3>
-          <div className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
-            {answer}
-          </div>
-        </div>
-      )}
-
-      {references.length > 0 && (
-        <div className="mt-5 rounded-xl border border-slate-200 p-5">
-          <h3 className="font-bold text-slate-800 mb-3">参照候補</h3>
-          <div className="space-y-2">
-            {references.map((ref, index) => (
-              <div
-                key={`${ref.material_id}-${index}`}
-                className="text-sm text-slate-600 bg-white border border-slate-100 rounded-lg p-3"
-              >
-                第{ref.session_no ?? '-'}回 / p.{ref.page_start ?? '-'}-
-                {ref.page_end ?? '-'}
+          {answer && (
+            <div className="mt-6 rounded-xl bg-slate-50 border border-slate-200 p-5">
+              <h3 className="font-bold text-slate-800 mb-3">回答</h3>
+              <div className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                {answer}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {references.length > 0 && (
+            <div className="mt-5 rounded-xl border border-slate-200 p-5">
+              <h3 className="font-bold text-slate-800 mb-3">参照候補</h3>
+              <div className="space-y-2">
+                {references.map((ref, index) => (
+                  <div
+                    key={`${ref.material_id}-${index}`}
+                    className="text-sm text-slate-600 bg-white border border-slate-100 rounded-lg p-3"
+                  >
+                    第{ref.session_no ?? '-'}回 / p.{ref.page_start ?? '-'}-
+                    {ref.page_end ?? '-'}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
