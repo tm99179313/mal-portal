@@ -10,12 +10,13 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const formData = await req.formData();
+    const body = await req.json();
 
-    const courseId = String(formData.get('courseId') || '');
-    const sessionNoRaw = String(formData.get('sessionNo') || '');
-    const title = String(formData.get('title') || '');
-    const file = formData.get('file') as File | null;
+    const courseId = String(body.courseId || '');
+    const sessionNoRaw = String(body.sessionNo || '');
+    const title = String(body.title || '');
+    const fileName = String(body.fileName || '');
+    const filePath = String(body.filePath || '');
 
     if (!courseId) {
       return NextResponse.json({ error: 'courseId is required' }, { status: 400 });
@@ -29,15 +30,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'title is required' }, { status: 400 });
     }
 
-    if (!file) {
-      return NextResponse.json({ error: 'file is required' }, { status: 400 });
+    if (!fileName) {
+      return NextResponse.json({ error: 'fileName is required' }, { status: 400 });
     }
 
-    if (file.type !== 'application/pdf') {
-      return NextResponse.json(
-        { error: 'PDFファイルをアップロードしてください。' },
-        { status: 400 }
-      );
+    if (!filePath) {
+      return NextResponse.json({ error: 'filePath is required' }, { status: 400 });
     }
 
     const sessionNo = Number(sessionNoRaw);
@@ -49,30 +47,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const safeFileName = file.name.replace(/[^\w.\-ぁ-んァ-ン一-龥]/g, '_');
-    const filePath = `${courseId}/session-${String(sessionNo).padStart(2, '0')}-${Date.now()}-${safeFileName}`;
-
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from('course-materials')
-      .upload(filePath, buffer, {
-        contentType: 'application/pdf',
-        upsert: false,
-      });
-
-    if (uploadError) {
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
-    }
-
     const { data: material, error: insertError } = await supabaseAdmin
       .from('course_materials')
       .insert({
         course_id: courseId,
         session_no: sessionNo,
         title,
-        file_name: file.name,
+        file_name: fileName,
         file_path: filePath,
         status: 'draft',
       })
