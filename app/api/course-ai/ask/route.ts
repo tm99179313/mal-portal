@@ -3,6 +3,8 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
+const ADMIN_EMAIL = 'tm99179313@gmail.com';
+const MAX_DAILY_AI_QUESTIONS = 10;
 
 type MatchedChunk = {
   id: string;
