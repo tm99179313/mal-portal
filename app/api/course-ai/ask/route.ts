@@ -212,7 +212,7 @@ export async function POST(req: Request) {
       {
         query_embedding: questionEmbedding,
         match_course_id: courseId,
-        match_count: 6,
+        match_count: 10,
       }
     );
 
