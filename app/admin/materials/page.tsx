@@ -68,12 +68,9 @@ export default function AdminMaterialsPage() {
     setIsUploading(true);
 
     try {
-      const safeFileName = file.name.replace(/[^\w.\-ぁ-んァ-ン一-龥]/g, '_');
-
-      const filePath = `${courseId}/session-${String(sessionNo).padStart(
-        2,
-        '0'
-      )}-${Date.now()}-${safeFileName}`;
+      // Storage上では日本語ファイル名を使わず、安全な英数字ファイル名にする
+      const safeSessionNo = String(sessionNo).padStart(2, '0');
+      const filePath = `${courseId}/session-${safeSessionNo}-${Date.now()}.pdf`;
 
       // 1. PDF本体はSupabase Storageへ直接アップロード
       const { error: uploadError } = await supabase.storage
@@ -188,6 +185,7 @@ export default function AdminMaterialsPage() {
 
             <p className="text-xs text-slate-400 mt-2">
               PDFはVercel APIを通さず、Supabase Storageへ直接アップロードします。
+              Storage上では安全な英数字ファイル名で保存し、元のファイル名はDBに保存します。
             </p>
           </div>
 
