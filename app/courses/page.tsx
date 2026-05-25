@@ -110,13 +110,12 @@ export default function StudentCoursesPage() {
           </h1>
 
           <div className="flex items-center gap-4">
-          <Link
+         <Link
   href="/case-ai"
   title="Hidden Case Room"
-  className="mr-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/60 px-3 py-1 text-xs font-bold text-slate-300 hover:text-slate-500 hover:border-slate-300 transition-colors"
+  className="mr-6 text-base opacity-25 hover:opacity-60 transition-opacity"
 >
-  <span>🥷</span>
-  <span className="tracking-[0.2em]">CASE ROOM</span>
+  🥷
 </Link>
             <span className="text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full tracking-widest">
               STUDENT
