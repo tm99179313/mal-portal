@@ -139,7 +139,6 @@ async function createCaseReview(input: {
           ].join('\n'),
         },
         {
-          {
   role: 'user',
   content: [
     '以下の症例情報をもとに、症例検討を行ってください。',
