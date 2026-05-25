@@ -78,7 +78,6 @@ async function createCaseReview(input: {
         {
           role: 'system',
           content: [
-           content: [
   'あなたは歯科医師向けの症例検討AIです。',
   '目的は、診断確定ではなく、症例の問題点・診断上の論点・治療計画の方向性を整理することです。',
   '',
