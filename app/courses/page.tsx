@@ -14,7 +14,9 @@ export default function StudentCoursesPage() {
   useEffect(() => {
     async function load() {
       // 🔒 ログインしているかチェック
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       // ログインしていなければ、強制的にログイン画面へ飛ばす
       if (!user) {
@@ -49,7 +51,10 @@ export default function StudentCoursesPage() {
 
     try {
       // ログインユーザーを取得
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
 
       if (userError || !user || !user.email) {
         alert('ログイン情報を確認できませんでした。再度ログインしてください。');
@@ -110,22 +115,19 @@ export default function StudentCoursesPage() {
           </h1>
 
           <div className="flex items-center gap-4">
-        <div className="relative inline-flex items-center">
-  <Link
-    href="/case-ai"
-    aria-label="Case Lab"
-    className="absolute -left-5 top-1/2 -translate-y-1/2 text-lg z-10"
-  >
-    🥷
-  </Link>
+            <div className="relative inline-flex items-center">
+              <Link
+                href="/case-ai"
+                aria-label="Case Lab"
+                className="absolute -left-4 top-1/2 -translate-y-1/2 text-lg z-10"
+              >
+                🥷
+              </Link>
 
-  <span className="text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 pl-5 pr-3 py-1.5 rounded-full tracking-widest">
-    STUDENT
-  </span>
-</div>
-            <span className="text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full tracking-widest">
-              STUDENT
-            </span>
+              <span className="text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 pl-5 pr-3 py-1.5 rounded-full tracking-widest">
+                STUDENT
+              </span>
+            </div>
 
             <button
               onClick={async () => {
@@ -142,14 +144,16 @@ export default function StudentCoursesPage() {
 
       <main className="max-w-5xl mx-auto p-6 md:p-12">
         <div className="mb-10">
-          <h2 className="text-3xl font-bold text-slate-800 mb-2">コース一覧</h2>
+          <h2 className="text-3xl font-bold text-slate-800 mb-2">
+            コース一覧
+          </h2>
           <p className="text-slate-500 font-medium">
             参加しているセミナーを選択し、パスコードを入力して学習を開始してください。
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {courses.map(course => {
+          {courses.map((course) => {
             const isChecking = checkingCourseId === course.id;
 
             return (
