@@ -110,13 +110,19 @@ export default function StudentCoursesPage() {
           </h1>
 
           <div className="flex items-center gap-4">
-         <Link
-  href="/case-ai"
-  title="Hidden Case Room"
-  className="mr-6 text-base opacity-25 hover:opacity-60 transition-opacity"
->
-  🥷
-</Link>
+        <div className="relative inline-flex items-center">
+  <Link
+    href="/case-ai"
+    aria-label="Case Lab"
+    className="absolute -left-5 top-1/2 -translate-y-1/2 text-lg z-10"
+  >
+    🥷
+  </Link>
+
+  <span className="text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 pl-5 pr-3 py-1.5 rounded-full tracking-widest">
+    STUDENT
+  </span>
+</div>
             <span className="text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full tracking-widest">
               STUDENT
             </span>
