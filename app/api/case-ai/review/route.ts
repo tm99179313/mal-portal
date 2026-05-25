@@ -3,6 +3,28 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
+async function getMalCasePolicy() {
+  const { data, error } = await supabaseAdmin
+    .from('ai_guidelines')
+    .select('content')
+    .eq('key', 'mal_case_core_policy')
+    .single();
+
+  if (error || !data?.content) {
+    return [
+      'MAL+では、顔貌評価を診断の神髄とする。',
+      '治療計画は歯列からではなく、顔貌・側貌・スマイル・顎位から逆算して立案する。',
+      '顔貌から下顎偏位、口唇突出、バッカルコリドー、スマイルライン、顎位の変化可能性を読み取る。',
+      '最終的な治療ゴールは、舌が上顎歯列の中に収まり、下顎が無理なく機能し、長期的に噛める状態を作ることである。',
+      '第一選択は原則として非抜歯で検討する。',
+      'ただし、無理な非抜歯で顔貌・口唇突出・歯周・咬合が悪化する場合は限界を明示する。',
+      '抜歯を検討する場合は、失活歯、補綴歯、予後不良歯、咬合上価値が低い歯を優先的に評価する。',
+      '治療計画は必ず本命・対抗・大穴で整理する。',
+    ].join('\n');
+  }
+
+  return data.content;
+}
 
 async function createCaseReview(input: {
   patientAge: string;
