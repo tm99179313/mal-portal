@@ -12,6 +12,7 @@ export default function CaseAiPage() {
   const [findings, setFindings] = useState('');
   const [records, setRecords] = useState('');
   const [userPlan, setUserPlan] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
 
   const [answer, setAnswer] = useState('');
   const [message, setMessage] = useState('');
@@ -39,22 +40,27 @@ export default function CaseAiPage() {
         throw new Error('ログイン情報が確認できません。再ログインしてください。');
       }
 
-      const res = await fetch('/api/case-ai/review', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          patientAge,
-          patientSex,
-          chiefComplaint,
-          caseSummary,
-          findings,
-          records,
-          userPlan,
-        }),
-      });
+     const formData = new FormData();
+
+formData.append('patientAge', patientAge);
+formData.append('patientSex', patientSex);
+formData.append('chiefComplaint', chiefComplaint);
+formData.append('caseSummary', caseSummary);
+formData.append('findings', findings);
+formData.append('records', records);
+formData.append('userPlan', userPlan);
+
+files.forEach((file) => {
+  formData.append('files', file);
+});
+
+const res = await fetch('/api/case-ai/review', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${session.access_token}`,
+  },
+  body: formData,
+});
 
       const text = await res.text();
 
@@ -180,6 +186,45 @@ export default function CaseAiPage() {
 
           <div>
             <label className="block text-sm font-bold mb-2">取得済み資料</label>
+            <div>
+  <label className="block text-sm font-bold mb-2">
+    症例資料
+  </label>
+
+  <div className="border border-slate-300 rounded-xl p-4 bg-white">
+    <label className="inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-slate-100 border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200 active:scale-95 transition-all">
+      画像を選択
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        multiple
+        onChange={(e) => {
+          const selected = Array.from(e.target.files || []);
+          setFiles(selected.slice(0, 8));
+        }}
+        className="hidden"
+      />
+    </label>
+
+    <p className="text-xs text-slate-400 mt-3">
+      顔貌・スマイル・口腔内・パノラマ・セファロ・CTスクショなどを最大8枚まで添付できます。
+      患者名・カルテ番号など個人情報が写らないようにしてください。
+    </p>
+
+    {files.length > 0 && (
+      <div className="mt-3 space-y-1">
+        {files.map((file, index) => (
+          <div
+            key={`${file.name}-${index}`}
+            className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded px-3 py-2"
+          >
+            {index + 1}. {file.name}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
             <textarea
               value={records}
               onChange={(e) => setRecords(e.target.value)}
