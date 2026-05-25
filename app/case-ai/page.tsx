@@ -24,8 +24,16 @@ export default function CaseAiPage() {
     setMessage('');
     setAnswer('');
 
-    if (!chiefComplaint && !caseSummary && !findings) {
-      setMessage('主訴・症例概要・所見のいずれかを入力してください。');
+    if (!chiefComplaint && !caseSummary && !findings && files.length === 0) {
+      setMessage('主訴・症例概要・所見・画像のいずれかを入力してください。');
+      return;
+    }
+
+    const totalFileSize = files.reduce((sum, file) => sum + file.size, 0);
+    const maxTotalFileSize = 4 * 1024 * 1024;
+
+    if (totalFileSize > maxTotalFileSize) {
+      setMessage('画像の合計サイズが大きすぎます。合計4MB以内にしてください。');
       return;
     }
 
@@ -40,27 +48,27 @@ export default function CaseAiPage() {
         throw new Error('ログイン情報が確認できません。再ログインしてください。');
       }
 
-     const formData = new FormData();
+      const formData = new FormData();
 
-formData.append('patientAge', patientAge);
-formData.append('patientSex', patientSex);
-formData.append('chiefComplaint', chiefComplaint);
-formData.append('caseSummary', caseSummary);
-formData.append('findings', findings);
-formData.append('records', records);
-formData.append('userPlan', userPlan);
+      formData.append('patientAge', patientAge);
+      formData.append('patientSex', patientSex);
+      formData.append('chiefComplaint', chiefComplaint);
+      formData.append('caseSummary', caseSummary);
+      formData.append('findings', findings);
+      formData.append('records', records);
+      formData.append('userPlan', userPlan);
 
-files.forEach((file) => {
-  formData.append('files', file);
-});
+      files.forEach((file) => {
+        formData.append('files', file);
+      });
 
-const res = await fetch('/api/case-ai/review', {
-  method: 'POST',
-  headers: {
-    Authorization: `Bearer ${session.access_token}`,
-  },
-  body: formData,
-});
+      const res = await fetch('/api/case-ai/review', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
 
       const text = await res.text();
 
@@ -84,6 +92,91 @@ const res = await fetch('/api/case-ai/review', {
       setIsLoading(false);
     }
   }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = Array.from(e.target.files || []);
+
+    const validFiles = selected
+      .filter((file) =>
+        ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+      )
+      .slice(0, 8);
+
+    setFiles(validFiles);
+    setMessage('');
+  }
+
+  function removeFile(indexToRemove: number) {
+    setFiles((current) =>
+      current.filter((_, index) => index !== indexToRemove)
+    );
+  }
+
+  function renderFormattedAnswer(text: string) {
+    const lines = text.split('\n');
+
+    return (
+      <div className="space-y-3">
+        {lines.map((line, index) => {
+          const trimmed = line.trim();
+
+          if (!trimmed) {
+            return <div key={index} className="h-2" />;
+          }
+
+          const isHeading =
+            /^\d+\./.test(trimmed) ||
+            trimmed.startsWith('【') ||
+            trimmed.includes('本命プラン') ||
+            trimmed.includes('対抗プラン') ||
+            trimmed.includes('大穴プラン') ||
+            trimmed.includes('MAL+的コメント') ||
+            trimmed.includes('追加で必要な資料') ||
+            trimmed.includes('顔貌から見た') ||
+            trimmed.includes('顎位の変化可能性');
+
+          if (isHeading) {
+            return (
+              <div
+                key={index}
+                className="mt-5 rounded-xl bg-slate-900 text-white px-4 py-3 text-sm font-bold"
+              >
+                {trimmed}
+              </div>
+            );
+          }
+
+          if (
+            trimmed.startsWith('-') ||
+            trimmed.startsWith('・') ||
+            trimmed.startsWith('✓') ||
+            trimmed.startsWith('※')
+          ) {
+            return (
+              <div
+                key={index}
+                className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-2 text-sm leading-7 text-slate-700"
+              >
+                {trimmed}
+              </div>
+            );
+          }
+
+          return (
+            <p key={index} className="text-sm leading-8 text-slate-700">
+              {trimmed}
+            </p>
+          );
+        })}
+      </div>
+    );
+  }
+
+  const totalFileSizeMb = (
+    files.reduce((sum, file) => sum + file.size, 0) /
+    1024 /
+    1024
+  ).toFixed(2);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
@@ -111,7 +204,7 @@ const res = await fetch('/api/case-ai/review', {
             症例相談・診断AI
           </h1>
           <p className="text-slate-500 font-medium leading-7">
-            症例情報を入力すると、問題点・診断上の論点・治療計画の方向性を整理します。
+            症例情報と資料画像をもとに、顔貌起点で問題点・診断上の論点・治療計画の方向性を整理します。
           </p>
         </div>
 
@@ -120,6 +213,9 @@ const res = await fetch('/api/case-ai/review', {
           <p>
             このAIは診断確定や治療指示を行うものではなく、症例検討の論点整理を補助するものです。
             最終的な診断・治療計画は、担当歯科医師が資料を確認して判断してください。
+          </p>
+          <p className="mt-1">
+            顔貌写真・口腔内写真などを添付する場合は、患者名・カルテ番号など個人情報が写らないようにしてください。
           </p>
         </div>
 
@@ -179,58 +275,68 @@ const res = await fetch('/api/case-ai/review', {
             <textarea
               value={findings}
               onChange={(e) => setFindings(e.target.value)}
-              placeholder="例：Angle Class II傾向、叢生あり、正中偏位、過蓋咬合、低角傾向など"
+              placeholder="例：側貌で口唇突出感あり、スマイル時バッカルコリドーあり、Angle Class II傾向、正中偏位、過蓋咬合など"
               className="w-full min-h-[150px] border border-slate-300 rounded-xl p-4 text-sm"
             />
           </div>
 
           <div>
             <label className="block text-sm font-bold mb-2">取得済み資料</label>
-            <div>
-  <label className="block text-sm font-bold mb-2">
-    症例資料
-  </label>
-
-  <div className="border border-slate-300 rounded-xl p-4 bg-white">
-    <label className="inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-slate-100 border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200 active:scale-95 transition-all">
-      画像を選択
-      <input
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        multiple
-        onChange={(e) => {
-          const selected = Array.from(e.target.files || []);
-          setFiles(selected.slice(0, 8));
-        }}
-        className="hidden"
-      />
-    </label>
-
-    <p className="text-xs text-slate-400 mt-3">
-      顔貌・スマイル・口腔内・パノラマ・セファロ・CTスクショなどを最大8枚まで添付できます。
-      患者名・カルテ番号など個人情報が写らないようにしてください。
-    </p>
-
-    {files.length > 0 && (
-      <div className="mt-3 space-y-1">
-        {files.map((file, index) => (
-          <div
-            key={`${file.name}-${index}`}
-            className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded px-3 py-2"
-          >
-            {index + 1}. {file.name}
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-</div>
             <textarea
               value={records}
               onChange={(e) => setRecords(e.target.value)}
               placeholder="例：口腔内写真、顔貌写真、パノラマ、セファロ、CT、iTeroスキャン"
               className="w-full min-h-[90px] border border-slate-300 rounded-xl p-4 text-sm"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-2">症例資料</label>
+
+            <div className="border border-slate-300 rounded-xl p-4 bg-white">
+              <label className="inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-slate-100 border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200 active:scale-95 transition-all">
+                画像を選択
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+
+              <p className="text-xs text-slate-400 mt-3 leading-6">
+                顔貌・スマイル・口腔内・パノラマ・セファロ・CTスクショなどを最大8枚まで添付できます。
+                画像は合計4MB以内を目安にしてください。患者名・カルテ番号など個人情報が写らないようにしてください。
+              </p>
+
+              {files.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <div className="text-xs font-bold text-slate-500">
+                    選択中：{files.length}枚 / 合計 {totalFileSizeMb} MB
+                  </div>
+
+                  {files.map((file, index) => (
+                    <div
+                      key={`${file.name}-${index}`}
+                      className="flex items-center justify-between gap-3 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"
+                    >
+                      <span className="truncate">
+                        {index + 1}. {file.name}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="shrink-0 text-red-500 font-bold hover:text-red-700"
+                      >
+                        削除
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -263,9 +369,7 @@ const res = await fetch('/api/case-ai/review', {
         {answer && (
           <div className="mt-8 bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8">
             <h2 className="text-xl font-bold mb-4">AIによる症例整理</h2>
-            <div className="whitespace-pre-wrap text-sm leading-8 text-slate-700">
-              {answer}
-            </div>
+            {renderFormattedAnswer(answer)}
           </div>
         )}
       </main>
