@@ -223,15 +223,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
+    const formData = await req.formData();
 
-    const patientAge = String(body.patientAge || '').trim();
-    const patientSex = String(body.patientSex || '').trim();
-    const chiefComplaint = String(body.chiefComplaint || '').trim();
-    const caseSummary = String(body.caseSummary || '').trim();
-    const findings = String(body.findings || '').trim();
-    const records = String(body.records || '').trim();
-    const userPlan = String(body.userPlan || '').trim();
+const patientAge = String(formData.get('patientAge') || '').trim();
+const patientSex = String(formData.get('patientSex') || '').trim();
+const chiefComplaint = String(formData.get('chiefComplaint') || '').trim();
+const caseSummary = String(formData.get('caseSummary') || '').trim();
+const findings = String(formData.get('findings') || '').trim();
+const records = String(formData.get('records') || '').trim();
+const userPlan = String(formData.get('userPlan') || '').trim();
+
+const uploadedFiles = formData
+  .getAll('files')
+  .filter((item): item is File => item instanceof File)
+  .slice(0, 8);
 
     if (!chiefComplaint && !caseSummary && !findings) {
       return NextResponse.json(
