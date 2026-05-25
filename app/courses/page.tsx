@@ -115,12 +115,16 @@ export default function StudentCoursesPage() {
           </h1>
 
           <div className="flex items-center gap-4">
-           <span className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full tracking-widest select-none">
+           <Link
+  href="/case-ai"
+  aria-label="Case Lab"
+  className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full tracking-widest select-none cursor-default"
+>
   <span className="text-base leading-none" aria-hidden="true">
     🥷
   </span>
   <span>STUDENT</span>
-</span>
+</Link>
 
             <button
               onClick={async () => {
